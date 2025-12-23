@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Green Computing Quest</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f0f7f4;
+      color: #1f2933;
+    }
+    header {
+      background: #0f766e;
+      color: white;
+      padding: 1rem 2rem;
+    }
+    main {
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+    }
+    button {
+      background: #14b8a6;
+      border: none;
+      color: white;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 0.25rem 0;
+      display: block;
+      width: 100%;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #0d9488;
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: #dcfce7;
+      color: #166534;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      margin-right: 0.3rem;
+    }
+    .leaderboard li {
+      list-style: none;
+      padding: 0.3rem 0;
+    }
+    .feedback {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌱 Green Computing Quest</h1>
+    <p>Learn sustainable digital habits through everyday decisions</p>
+  </header>
+
+  <main>
+    <div class="card status">
+      <div>Points: <span id="points">0</span></div>
+      <div>Badges: <span id="badges">None</span></div>
+    </div>
+
+    <div class="card" id="missionCard">
+      <h2 id="missionTitle"></h2>
+      <p id="missionText"></p>
+      <div id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Leaderboard (Local)</h2>
+      <ol class="leaderboard" id="leaderboard"></ol>
+    </div>
+  </main>
+
+  <script>
+    const missions = [
+      {
+        title: "Old Laptop Disposal",
+        text: "Your old laptop is no longer fast enough for daily work. What do you do?",
+        choices: [
+          { text: "Throw it in the trash", points: -10, feedback: "Electronic waste can harm the environment." },
+          { text: "Recycle it at an e-waste center", points: 15, badge: "E-Waste Hero", feedback: "Correct! Recycling prevents toxic pollution." },
+          { text: "Store it indefinitely", points: 0, feedback: "Better than trashing, but still not ideal." }
+        ]
+      },
+      {
+        title: "Energy Usage at Home",
+        text: "You leave your computer desk for lunch. What do you do?",
+        choices: [
+          { text: "Leave everything running", points: -5, feedback: "Idle power consumption adds up." },
+          { text: "Put the computer to sleep", points: 10, badge: "Power Saver", feedback: "Great! Sleep mode saves energy." },
+          { text: "Shut it down completely", points: 12, feedback: "Excellent energy-saving habit." }
+        ]
+      },
+      {
+        title: "Choosing Hardware",
+        text: "You are buying a new computer. Which option do you choose?",
+        choices: [
+          { text: "High performance, no energy rating", points: -5, feedback: "Performance is important, but efficiency matters too." },
+          { text: "Energy-efficient certified device", points: 15, badge: "Green Buyer", feedback: "Perfect choice for sustainable computing." },
+          { text: "Cheapest available option", points: 0, feedback: "Cost matters, but sustainability should be considered." }
+        ]
+      },
+      {
+        title: "Renewable Energy",
+        text: "Your office offers a renewable energy subscription for IT systems. What do you do?",
+        choices: [
+          { text: "Ignore the option", points: -5, feedback: "Renewables reduce carbon footprint." },
+          { text: "Advocate for renewable energy use", points: 15, badge: "Clean Energy Advocate", feedback: "Fantastic! This supports long-term sustainability." }
+        ]
+      }
+    ];
+
+    let currentMission = 0;
+    let points = 0;
+    const earnedBadges = new Set();
+
+    function loadMission() {
+      const mission = missions[currentMission];
+      document.getElementById("missionTitle").innerText = mission.title;
+      document.getElementById("missionText").innerText = mission.text;
+      document.getElementById("feedback").innerText = "";
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+
+      mission.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.innerText = choice.text;
+        btn.onclick = () => selectChoice(choice);
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    function selectChoice(choice) {
+      points += choice.points;
+      document.getElementById("points").innerText = points;
+      document.getElementById("feedback").innerText = choice.feedback;
+
+      if (choice.badge) {
+        earnedBadges.add(choice.badge);
+        updateBadges();
+      }
+
+      currentMission++;
+      if (currentMission < missions.length) {
+        setTimeout(loadMission, 1200);
+      } else {
+        endGame();
+      }
+    }
+
+    function updateBadges() {
+      const badgeContainer = document.getElementById("badges");
+      badgeContainer.innerHTML = "";
+      earnedBadges.forEach(b => {
+        const span = document.createElement("span");
+        span.className = "badge";
+        span.innerText = b;
+        badgeContainer.appendChild(span);
+      });
+    }
+
+    function endGame() {
+      document.getElementById("missionTitle").innerText = "Mission Complete!";
+      document.getElementById("missionText").innerText = "You've completed Green Computing Quest.";
+      document.getElementById("choices").innerHTML = "";
+      saveScore();
+      renderLeaderboard();
+    }
+
+    function saveScore() {
+      const scores = JSON.parse(localStorage.getItem("greenScores") || "[]");
+      scores.push({ score: points, date: new Date().toLocaleDateString() });
+      scores.sort((a, b) => b.score - a.score);
+      localStorage.setItem("greenScores", JSON.stringify(scores.slice(0, 5)));
+    }
+
+    function renderLeaderboard() {
+      const scores = JSON.parse(localStorage.getItem("greenScores") || "[]");
+      const list = document.getElementById("leaderboard");
+      list.innerHTML = "";
+      scores.forEach(s => {
+        const li = document.createElement("li");
+        li.innerText = `${s.score} points – ${s.date}`;
+        list.appendChild(li);
+      });
+    }
+
+    renderLeaderboard();
+    loadMission();
+  </script>
+</body>
+</html>
